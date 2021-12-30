@@ -5,15 +5,16 @@ import News from "./components/News";
 
 const API = "http://localhost:3333/news";
 function App() {
-  let initialArchived = JSON.parse(localStorage.getItem('archived'))
-  if(!initialArchived){
-    initialArchived = false
+  let initialArchived = JSON.parse(localStorage.getItem("archived"));
+  const myHeaders = new Headers();
+
+  if (!initialArchived) {
+    initialArchived = false;
   }
   const [archived, setArchived] = useState(initialArchived);
 
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
- 
 
   const fetchNews = async () => {
     try {
@@ -32,20 +33,37 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('archived', archived)
-  }, [archived])
+    localStorage.setItem("archived", archived);
+  }, [archived]);
 
   const removeNew = (id) => {
-    setNews(news.filter((n) => n._id !== id));
+    var urlencoded = new URLSearchParams();
+
+    var requestOptions = {
+      method: "DELETE",
+      headers: myHeaders,
+      body: urlencoded,
+      redirect: "follow",
+    };
+    fetch(`${API}/${id}`, requestOptions)
+      .then((response) => {
+        if (response.ok) {
+          return response;
+        }
+        return Promise.reject(response);
+      })
+      .then(() => {
+        setNews(news.filter((n) => n._id !== id));
+      })
+      .catch((error) => console.log("error", error));
   };
 
   const archiveNew = (id, archiveDate) => {
-    console.log(archiveDate)
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
     var urlencoded = new URLSearchParams();
-    urlencoded.append("archiveDate", archiveDate===null?'': archiveDate);
+    urlencoded.append("archiveDate", archiveDate === null ? "" : archiveDate);
 
     var requestOptions = {
       method: "PUT",
@@ -55,21 +73,19 @@ function App() {
     };
 
     fetch(`${API}/${id}`, requestOptions)
-    .then((response) => {
-      if (response.ok) { 
-       return response.json();
-      }
-      return Promise.reject(response); 
-    })
-    .then(() => {
-      setNews(news.map((n) => (n._id === id ? { ...n, archiveDate } : n)));
-    })
-    .catch((error) => console.log("error", error));
-    console.log("archiveNew", id + " " + archiveDate);
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        return Promise.reject(response);
+      })
+      .then(() => {
+        setNews(news.map((n) => (n._id === id ? { ...n, archiveDate } : n)));
+      })
+      .catch((error) => console.log("error", error));
   };
 
   return (
-    // {loading ? <button onClick={()=>{setArchived(!archived)}}>{}<button/>}
     <main>
       <button
         className="show-btn"
